@@ -1,10 +1,9 @@
 // Copyright 2020 Obolenskiy Arseniy
-#ifndef MODULES_TASK_1_MAKAROVA_V_CRS_MATRIX_MULTIPLICATION_H_
-#define MODULES_TASK_1_MAKAROVA_V_CRS_MATRIX_MULTIPLICATION_H
+#ifndef MODULES_TASK_1_MAKAROVA_V_CRS_MATRIX_MULTIPLICATION_MATRIX_MULTIPLICATION_H_
+#define MODULES_TASK_1_MAKAROVA_V_CRS_MATRIX_MULTIPLICATION_MATRIX_MULTIPLICATION_H_
 
 #include <vector>
 
-// FIXME
 struct Matrix {
     int rows, cols;
     std::vector<int> val;
@@ -30,8 +29,8 @@ MatrixCRS convert(const Matrix &inMat);
 MatrixCRS transp(const MatrixCRS &inMat);
 
 MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second);
-Matrix matrixMult(const Matrix &first, const Matrix &second); 
+Matrix matrixMult(const Matrix &first, const Matrix &second);
 
 void print(const MatrixCRS &in);
 
-#endif  // MODULES_TASK_1_MAKAROVA_V_CRS_MATRIX_MULTIPLICATION_HNG_GAUSSIAN_IMAGE_FILTERING_H_
+#endif  // MODULES_TASK_1_MAKAROVA_V_CRS_MATRIX_MULTIPLICATION_MATRIX_MULTIPLICATION_H_

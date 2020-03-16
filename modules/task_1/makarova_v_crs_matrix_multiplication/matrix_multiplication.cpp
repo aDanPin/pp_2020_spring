@@ -15,7 +15,7 @@ Matrix generateRandomMat(int rows, int cols) {
     std::uniform_int_distribution<int> dis(-255, 255);
     Matrix result(rows, cols);
     for (int i = 0; i < rows * cols; ++i) {
-        if(dis(gen) > 128)
+        if (dis(gen) > 128)
             result.val[i] = dis(gen);
         else
             result.val[i] = 0;
@@ -35,18 +35,10 @@ MatrixCRS convert(const Matrix &inMat) {
     int count;
 
     count = 1;
-    for (int j = 0; j < inMat.cols; ++j){
-        if (inMat.val[/*inMat.cols * i  +*/ j] != 0) {
-            ++count;
-            result.val.emplace_back(inMat.val[/*inMat.cols * i +*/ j]);
-            result.cols_pos.emplace_back(j);
-        }
-    }
     result.ptrs.emplace_back(count);
-
-    for (int i = 1; i < inMat.rows; ++i){
+    for (int i = 0; i < inMat.rows; ++i) {
         count = 0;
-        for (int j = 0; j < inMat.cols; ++j){
+        for (int j = 0; j < inMat.cols; ++j) {
             if (inMat.val.at(inMat.cols * i + j) != 0) {
                 ++count;
 
@@ -66,13 +58,10 @@ MatrixCRS transp(const MatrixCRS &inMat) {
     // generate out mat
     Matrix just_mat(inMat.rows, inMat.cols);
 
-    for (int j = 1; j < inMat.ptrs[0]; ++j) {
-        just_mat.val[inMat.cols_pos[j - 1]] = inMat.val[j - 1];
-    }
     for (size_t i = 1; i < inMat.ptrs.size(); ++i) {
         // i its rows
         for (int j = inMat.ptrs[i - 1]; j < inMat.ptrs[i]; ++j) {
-            just_mat.val[just_mat.cols * i + inMat.cols_pos[j - 1]] = inMat.val[j - 1];
+            just_mat.val[just_mat.cols * (i - 1) + inMat.cols_pos[j - 1]] = inMat.val[j - 1];
         }
     }
 
@@ -83,21 +72,12 @@ MatrixCRS transp(const MatrixCRS &inMat) {
     int count;
 
     count = 1;
-    for (int i = 0; i < just_mat.rows; ++i){
-        if (just_mat.val[just_mat.cols * i] != 0) {
-            ++count;
-            result.val.emplace_back(just_mat.val[inMat.cols * i]);
-            result.cols_pos.emplace_back(i);
-        }
-    }
     result.ptrs.emplace_back(count);
-
-    for (int j = 1; j < just_mat.rows; ++j) {
+    for (int j = 0; j < just_mat.rows; ++j) {
         count = 0;
-        for (int i = 0; i < just_mat.cols; ++i){
+        for (int i = 0; i < just_mat.cols; ++i) {
             if (just_mat.val[just_mat.cols * i + j] != 0) {
                 ++count;
-                //std::cout<< 
                 result.val.emplace_back(just_mat.val[inMat.cols * i + j]);
                 result.cols_pos.emplace_back(i);
             }
@@ -135,11 +115,6 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
 
     MatrixCRS second = transp(second_a);
 
-    std::vector<int> newVec = {1};
-    for(size_t i = 0; i < second.ptrs.size(); ++i)
-        newVec.emplace_back(second.ptrs[i]);    
-    second.ptrs = newVec;
-
     if (first.ptrs.size() != second.ptrs.size())
             throw std::runtime_error("AAAAAA");
 
@@ -164,11 +139,12 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
                     res += first.val[first_it - 1] * second.val[second_it - 1];
                     first_it++;
                     second_it++;
+                } else {
+                    if (first.cols_pos[first_it - 1] < second.cols_pos[second_it - 1])
+                        first_it++;
+                    else
+                        second_it++;
                 }
-                else if (first.cols_pos[first_it - 1] < second.cols_pos[second_it - 1])
-                    first_it++;
-                else
-                    second_it++;
             }
 
             if (res != 0) {
@@ -184,7 +160,6 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
 }
 
 void print(const MatrixCRS &in) {
-
     std::cout <<"vals: "<< std::endl;
     for (size_t i = 0; i < in.val.size(); i++)
         std::cout << in.val[i]<< ' ';

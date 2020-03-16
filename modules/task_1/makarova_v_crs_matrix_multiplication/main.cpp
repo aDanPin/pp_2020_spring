@@ -1,29 +1,30 @@
 // Copyright 2020 Makarova Viktoria
 
-#include <vector>
-#include <iostream>
-
 #include <gtest/gtest.h>
+
+#include <iostream>
+#include <vector>
+
 #include "./matrix_multiplication.h"
 
-TEST(Gaussian_Image_Filtering_seq, Can_Filter_Small_Image) {
+TEST(Gaussian_Image_Filtering_seq, Simple_Convert) {
     const int rows = 3, cols = 4;
-    Matrix mat(rows, cols);
 
     std::vector<int> mat_val = {1, 0, 2, 0,
                                 0, 3, 0, 0,
                                 4, 0, 5, 0};
+    Matrix mat(rows, cols);
+    mat.val = mat_val;
 
     std::vector<int> c_vals = {1, 2, 3, 4, 5};
-    std::vector<int> c_cols = {0 ,2, 1, 0, 2};
-    std::vector<int> c_ptrs = {3, 4, 6}; // !!!
+    std::vector<int> c_cols = {0, 2, 1, 0, 2};
+    std::vector<int> c_ptrs = {1, 3, 4, 6};
 
-    mat.val = mat_val;
     MatrixCRS cRSMat = convert(mat);
 
-    ASSERT_EQ(cRSMat.val, c_vals);
-    ASSERT_EQ(cRSMat.cols_pos, c_cols);
-    ASSERT_EQ(cRSMat.ptrs, c_ptrs);
+    EXPECT_EQ(cRSMat.val, c_vals);
+    EXPECT_EQ(cRSMat.cols_pos, c_cols);
+    EXPECT_EQ(cRSMat.ptrs, c_ptrs);
 }
 
 TEST(Gaussian_Image_Filtering_seq, Convert_first) {
@@ -37,14 +38,14 @@ TEST(Gaussian_Image_Filtering_seq, Convert_first) {
 
     std::vector<int> c_vals = {1, 3, 5, 4};
     std::vector<int> c_cols = {0, 1, 2, 3};
-    std::vector<int> c_ptrs = {2, 3, 4, 5}; // !!!
+    std::vector<int> c_ptrs = {1, 2, 3, 4, 5};
 
     mat.val = mat_val;
     MatrixCRS cRSMat = convert(mat);
 
-    ASSERT_EQ(cRSMat.val, c_vals);
-    ASSERT_EQ(cRSMat.cols_pos, c_cols);
-    ASSERT_EQ(cRSMat.ptrs, c_ptrs);
+    EXPECT_EQ(cRSMat.val, c_vals);
+    EXPECT_EQ(cRSMat.cols_pos, c_cols);
+    EXPECT_EQ(cRSMat.ptrs, c_ptrs);
 }
 
 TEST(Gaussian_Image_Filtering_seq, Random_Mat) {
@@ -53,7 +54,7 @@ TEST(Gaussian_Image_Filtering_seq, Random_Mat) {
 
     Matrix matrix = generateRandomMat(rows, cols);
 
-    ASSERT_EQ(matrix.val.size(), static_cast<size_t>(rows * cols));
+    EXPECT_EQ(matrix.val.size(), static_cast<size_t>(rows * cols));
 }
 
 TEST(Gaussian_Image_Filtering_seq, Convert) {
@@ -65,15 +66,15 @@ TEST(Gaussian_Image_Filtering_seq, Convert) {
     size_t count = 0;
     std::vector<int> c_val;
     for (size_t i = 0; i < matrix.val.size(); ++i)
-        if (matrix.val[i] != 0){
+        if (matrix.val[i] != 0) {
             ++count;
             c_val.emplace_back(matrix.val[i]);
         }
 
     MatrixCRS matrixCRS = convert(matrix);
 
-    ASSERT_EQ(matrixCRS.val.size(), count);
-    ASSERT_EQ(matrixCRS.val, c_val);
+    EXPECT_EQ(matrixCRS.val.size(), count);
+    EXPECT_EQ(matrixCRS.val, c_val);
 }
 
 TEST(Gaussian_Image_Filtering_seq, Transponation) {
@@ -95,12 +96,12 @@ TEST(Gaussian_Image_Filtering_seq, Transponation) {
     // 0, 4, 0, 1
 
     std::vector<int> c_vals = {1, 9, 4, 1};
-    std::vector<int> c_cols = {0 ,3, 1, 3};
-    std::vector<int> c_ptrs = {3, 3, 3, 5}; // !!!
+    std::vector<int> c_cols = {0, 3, 1, 3};
+    std::vector<int> c_ptrs = {1, 3, 3, 3, 5};
 
-    ASSERT_EQ(matrixCRS_tr.val, c_vals);
-    ASSERT_EQ(matrixCRS_tr.cols_pos, c_cols);
-    ASSERT_EQ(matrixCRS_tr.ptrs, c_ptrs);
+    EXPECT_EQ(matrixCRS_tr.val, c_vals);
+    EXPECT_EQ(matrixCRS_tr.cols_pos, c_cols);
+    EXPECT_EQ(matrixCRS_tr.ptrs, c_ptrs);
 }
 
 TEST(Gaussian_Image_Filtering_seq, B) {
@@ -108,7 +109,7 @@ TEST(Gaussian_Image_Filtering_seq, B) {
     Matrix second(3, 3);
 
     std::vector<int> first_val = {1, 0, 2,
-                                 -1, 3, 0,  
+                                 -1, 3, 0,
                                   0, 0, 3};
 
     std::vector<int> second_val = {0, 2, 0,
@@ -116,7 +117,7 @@ TEST(Gaussian_Image_Filtering_seq, B) {
                                    0, 0, 1};
 
     std::vector<int> res_val = {0, 2, 2,
-                               12,-2, 0,
+                               12, -2, 0,
                                 0, 0, 3};
 
     first.val = first_val;
@@ -124,15 +125,20 @@ TEST(Gaussian_Image_Filtering_seq, B) {
 
     Matrix res = matrixMult(first, second);
 
-    ASSERT_EQ(res.val, res_val);
+    EXPECT_EQ(res.val, res_val);
 }
 
 TEST(Gaussian_Image_Filtering_seq, C) {
-    MatrixCRS first;
-    first.rows = first.cols = 3;
-    first.val = {1, 2, -1, 3, 3};
-    first.cols_pos = {0, 2, 0, 1, 2};
-    first.ptrs = {1, 3, 5, 6};
+    std::vector<int> first_val = {1, 0, 2,
+                                 -1, 3, 0,
+                                  0, 0, 3};
+    Matrix fir(3, 3);
+    fir.val = first_val;
+    MatrixCRS first = convert(fir);
+//    first.rows = first.cols = 3;
+//    first.val = {1, 2, -1, 3, 3};
+//    first.cols_pos = {0, 2, 0, 1, 2};
+//    first.ptrs = {1, 3, 5, 6};
 
     std::vector<int> second_val = {0, 2, 0,
                                    4, 0, 0,
@@ -141,11 +147,17 @@ TEST(Gaussian_Image_Filtering_seq, C) {
     sec.val = second_val;
     MatrixCRS second = convert(sec);
 
-    MatrixCRS res;
-    res.cols = res.rows = 3;
-    res.val = {2, 2, 12, -2, 3};
-    res.cols_pos = {1, 2, 0, 1, 2};
-    res.ptrs = {1, 3, 5, 6};
+    std::vector<int> res_val = {0, 2, 2,
+                               12, -2, 0,
+                                0, 0, 3};
+    Matrix re(3, 3);
+    re.val = res_val;
+    MatrixCRS res = convert(re);
+
+//    res.cols = res.rows = 3;
+//    res.val = {2, 2, 12, -2, 3};
+//    res.cols_pos = {1, 2, 0, 1, 2};
+//    res.ptrs = {1, 3, 5, 6};
 
     MatrixCRS multRes = matrixCRSMult(first, second);
 
