@@ -31,11 +31,11 @@ TEST(Gaussian_Image_Filtering_seq, Convert_first) {
     Matrix mat(rows, cols);
 
     std::vector<int> mat_val = {1, 0, 0, 0,
-                                0, 1, 0, 0,
-                                0, 0, 1, 0,
-                                0, 0, 0, 1};
+                                0, 3, 0, 0,
+                                0, 0, 5, 0,
+                                0, 0, 0, 4};
 
-    std::vector<int> c_vals = {1, 1, 1, 1};
+    std::vector<int> c_vals = {1, 3, 5, 4};
     std::vector<int> c_cols = {0, 1, 2, 3};
     std::vector<int> c_ptrs = {2, 3, 4, 5}; // !!!
 
@@ -81,24 +81,22 @@ TEST(Gaussian_Image_Filtering_seq, Transponation) {
     Matrix mat(rows, cols);
 
     std::vector<int> mat_val = {1, 0, 0, 0,
-                                0, 0, 1, 0,
-                                0, 0, 1, 0,
-                                0, 0, 0, 1};
+                                0, 0, 0, 4,
+                                0, 0, 0, 0,
+                                9, 0, 0, 1};
 
     mat.val = mat_val;
 
-    MatrixCRS matrixCRS = convert(mat);
+    MatrixCRS matrixCRS_tr(transp(convert(mat)));
 
-    MatrixCRS matrixCRS_tr = transp(matrixCRS);
-
-    // 1, 0, 0, 0
+    // 1, 0, 0, 9
     // 0, 0, 0, 0
-    // 0, 1, 1, 0
-    // 0, 0, 0, 1
+    // 0, 0, 0, 0
+    // 0, 4, 0, 1
 
-    std::vector<int> c_vals = {1, 1, 1, 1};
-    std::vector<int> c_cols = {0 ,1, 2, 3};
-    std::vector<int> c_ptrs = {2, 2, 4, 5}; // !!!
+    std::vector<int> c_vals = {1, 9, 4, 1};
+    std::vector<int> c_cols = {0 ,3, 1, 3};
+    std::vector<int> c_ptrs = {3, 3, 3, 5}; // !!!
 
     ASSERT_EQ(matrixCRS_tr.val, c_vals);
     ASSERT_EQ(matrixCRS_tr.cols_pos, c_cols);
@@ -106,19 +104,20 @@ TEST(Gaussian_Image_Filtering_seq, Transponation) {
 }
 
 TEST(Gaussian_Image_Filtering_seq, B) {
-    Matrix first(3, 2);
-    Matrix second(2, 3);
+    Matrix first(3, 3);
+    Matrix second(3, 3);
 
-    std::vector<int> first_val = {1, 0,
-                                  2, 1,
-                                 -1, 1};
+    std::vector<int> first_val = {1, 0, 2,
+                                 -1, 3, 0,  
+                                  0, 0, 3};
 
-    std::vector<int> second_val = {1, 2, 0,
-                                   0,-1, 1};
+    std::vector<int> second_val = {0, 2, 0,
+                                   4, 0, 0,
+                                   0, 0, 1};
 
-    std::vector<int> res_val = {1, 2, 0,
-                                2, 3, 1,
-                               -1,-3, 1};
+    std::vector<int> res_val = {0, 2, 2,
+                               12,-2, 0,
+                                0, 0, 3};
 
     first.val = first_val;
     second.val = second_val;
@@ -128,27 +127,32 @@ TEST(Gaussian_Image_Filtering_seq, B) {
     ASSERT_EQ(res.val, res_val);
 }
 
-/*
-TEST(Gaussian_Image_Filtering_seq, Can_Handle_Incorrect_Image_Height) {
+TEST(Gaussian_Image_Filtering_seq, C) {
+    MatrixCRS first;
+    first.rows = first.cols = 3;
+    first.val = {1, 2, -1, 3, 3};
+    first.cols_pos = {0, 2, 0, 1, 2};
+    first.ptrs = {1, 3, 5, 6};
 
+    std::vector<int> second_val = {0, 2, 0,
+                                   4, 0, 0,
+                                   0, 0, 1};
+    Matrix sec(3, 3);
+    sec.val = second_val;
+    MatrixCRS second = convert(sec);
 
-    const int width = 10;
-    const int height = 10;
+    MatrixCRS res;
+    res.cols = res.rows = 3;
+    res.val = {2, 2, 12, -2, 3};
+    res.cols_pos = {1, 2, 0, 1, 2};
+    res.ptrs = {1, 3, 5, 6};
 
-    Image img = generateRandomImage(width, height);
+    MatrixCRS multRes = matrixCRSMult(first, second);
 
-    ASSERT_ANY_THROW(gaussianFilter(img, width, height - 1));
+    EXPECT_EQ(res.val, multRes.val);
+    EXPECT_EQ(res.cols_pos, multRes.cols_pos);
+    EXPECT_EQ(res.ptrs, multRes.ptrs);
 }
-
-TEST(Gaussian_Image_Filtering_seq, Can_Handle_Incorrect_Image_Width) {
-    const int width = 10;
-    const int height = 10;
-
-    Image img = generateRandomImage(width, height);
-
-    ASSERT_ANY_THROW(gaussianFilter(img, width + 1, height));
-}
-*/
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);

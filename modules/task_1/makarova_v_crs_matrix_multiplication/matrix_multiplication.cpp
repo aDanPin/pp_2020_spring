@@ -92,10 +92,6 @@ MatrixCRS transp(const MatrixCRS &inMat) {
     }
     result.ptrs.emplace_back(count);
 
-//    for (size_t i = 0; i < result.val.size(); ++i)
-//        std::cout<< result.val[i] << ' ';
-//    std::cout << std::endl;
-
     for (int j = 1; j < just_mat.rows; ++j) {
         count = 0;
         for (int i = 0; i < just_mat.cols; ++i){
@@ -114,8 +110,6 @@ MatrixCRS transp(const MatrixCRS &inMat) {
     return result;
 }
 
-//MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second);
-
 Matrix matrixMult(const Matrix &first, const Matrix &second) {
     if (first.cols != second.rows)
         throw std::runtime_error("Matrix dimensions do not match");
@@ -123,14 +117,86 @@ Matrix matrixMult(const Matrix &first, const Matrix &second) {
     Matrix out(first.rows, second.cols);
 
     // Now!!! i, j - its out matrix
-    for (int i = 0; i < out.rows; ++i)
-        for (int j = 0; j < out.cols; ++j) {
-            int res;
+    for (int i = 0; i < first.rows; ++i)
+        for (int j = 0; j < second.cols; ++j) {
+            int res = 0;
             for (int k = 0; k < first.cols; ++k)
                 res += first.val[first.cols * i + k] *
                        second.val[second.cols * k + j];
-            out.val[out.cols * i + j];
+            out.val[out.cols * i + j] = res;
         }
 
     return out;
+}
+
+MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
+    if (first.cols != second_a.rows)
+        throw std::runtime_error("Matrix dimensions do not match");
+
+    MatrixCRS second = transp(second_a);
+
+    std::vector<int> newVec = {1};
+    for(size_t i = 0; i < second.ptrs.size(); ++i)
+        newVec.emplace_back(second.ptrs[i]);    
+    second.ptrs = newVec;
+
+    if (first.ptrs.size() != second.ptrs.size())
+            throw std::runtime_error("AAAAAA");
+
+    MatrixCRS out;
+    out.rows = first.rows;
+    out.cols = second.cols;
+
+    int first_it;
+    int second_it;
+
+    int start = 1;
+    out.ptrs.emplace_back(start);
+    for (size_t i = 1; i < first.ptrs.size(); i++) {
+        for (size_t j = 1; j < second.ptrs.size(); j++) {
+            // pognali ebat'
+            first_it = first.ptrs[i - 1];
+            second_it = second.ptrs[j - 1];
+
+            int res = 0;
+            while (first_it < first.ptrs[i] && second_it < second.ptrs[j]) {
+                if (first.cols_pos[first_it - 1] == second.cols_pos[second_it - 1]) {
+                    res += first.val[first_it - 1] * second.val[second_it - 1];
+                    first_it++;
+                    second_it++;
+                }
+                else if (first.cols_pos[first_it - 1] < second.cols_pos[second_it - 1])
+                    first_it++;
+                else
+                    second_it++;
+            }
+
+            if (res != 0) {
+                out.val.emplace_back(res);
+                out.cols_pos.emplace_back(j - 1);
+                start++;
+            }
+        }
+        out.ptrs.emplace_back(start);
+    }
+
+    return out;
+}
+
+void print(const MatrixCRS &in) {
+
+    std::cout <<"vals: "<< std::endl;
+    for (size_t i = 0; i < in.val.size(); i++)
+        std::cout << in.val[i]<< ' ';
+    std::cout << std::endl;
+
+    std::cout <<"cols: "<< std::endl;
+    for (size_t i = 0; i < in.cols_pos.size(); i++)
+        std::cout << in.cols_pos[i] << ' ';
+    std::cout<< std::endl;
+
+    std::cout <<"ptrs: "<< std::endl;
+    for (size_t i = 0; i < in.ptrs.size(); i++)
+        std::cout << in.ptrs[i] << ' ';
+    std::cout<< std::endl;
 }

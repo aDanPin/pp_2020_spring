@@ -32,4 +32,6 @@ MatrixCRS transp(const MatrixCRS &inMat);
 MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second);
 Matrix matrixMult(const Matrix &first, const Matrix &second); 
 
+void print(const MatrixCRS &in);
+
 #endif  // MODULES_TASK_1_MAKAROVA_V_CRS_MATRIX_MULTIPLICATION_HNG_GAUSSIAN_IMAGE_FILTERING_H_
