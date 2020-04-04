@@ -5,16 +5,17 @@
 
 struct Matrix {
     int rows, cols;
-    std::vector<int> val;
+    std::vector<double> val;
     Matrix(int rows, int cols): rows(rows), cols(cols) {
-        val = std::vector<int>(cols * rows);
+        val = std::vector<double>(cols * rows);
     }
     ~Matrix() = default;
 };
 
+
 struct MatrixCRS {
     int rows, cols;
-    std::vector<int> val;
+    std::vector<double> val;
     std::vector<int> cols_pos;
     std::vector<int> ptrs;
     MatrixCRS() = default;

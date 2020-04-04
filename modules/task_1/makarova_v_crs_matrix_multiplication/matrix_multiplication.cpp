@@ -7,15 +7,24 @@
 #include "../../modules/task_1/makarova_v_crs_matrix_multiplication/matrix_multiplication.h"
 
 Matrix generateRandomMat(int rows, int cols) {
+    // int
     std::mt19937 gen;
     gen.seed((unsigned)time(0));
     std::uniform_int_distribution<int> dis(-255, 255);
+
+    // double
+    double lower_bound = 0;
+    double upper_bound = 10000;
+    std::uniform_real_distribution<double> unif(lower_bound,upper_bound);
+    std::default_random_engine re;
+
+
     Matrix result(rows, cols);
     for (int i = 0; i < rows * cols; ++i) {
         if (dis(gen) > 128)
-            result.val[i] = dis(gen);
+            result.val[i] = unif(re);
         else
-            result.val[i] = 0;
+            result.val[i] = 0.0;
     }
     return result;
 }
