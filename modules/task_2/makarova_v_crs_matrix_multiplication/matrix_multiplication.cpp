@@ -4,6 +4,9 @@
 #include <stdexcept>
 #include <vector>
 #include <iostream>
+
+#include <omp.h>
+
 #include "../../modules/task_2/makarova_v_crs_matrix_multiplication/matrix_multiplication.h"
 
 Matrix generateRandomMat(int rows, int cols) {
@@ -56,6 +59,7 @@ MatrixCRS transp(const MatrixCRS &inMat) {
     // generate out mat
     Matrix just_mat(inMat.rows, inMat.cols);
 
+#pragma omp parallel for
     for (size_t i = 1; i < inMat.ptrs.size(); ++i) {
         // i its rows
         for (int j = inMat.ptrs[i - 1]; j < inMat.ptrs[i]; ++j) {
@@ -70,7 +74,7 @@ MatrixCRS transp(const MatrixCRS &inMat) {
     int count;
 
     count = 1;
-    result.ptrs.emplace_back(count);
+    result.ptrs.emplace_back(1);
     for (int j = 0; j < just_mat.rows; ++j) {
         count = 0;
         for (int i = 0; i < just_mat.cols; ++i) {
