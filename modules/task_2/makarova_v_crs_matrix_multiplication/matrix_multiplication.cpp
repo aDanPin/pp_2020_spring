@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <vector>
 #include <iostream>
-#include "../../modules/task_1/makarova_v_crs_matrix_multiplication/matrix_multiplication.h"
+#include "../../modules/task_2/makarova_v_crs_matrix_multiplication/matrix_multiplication.h"
 
 Matrix generateRandomMat(int rows, int cols) {
     std::mt19937 gen;
@@ -12,8 +12,9 @@ Matrix generateRandomMat(int rows, int cols) {
     std::uniform_int_distribution<int> dis(-255, 255);
     Matrix result(rows, cols);
     for (int i = 0; i < rows * cols; ++i) {
-        if (dis(gen) > 128)
-            result.val[i] = dis(gen);
+        if (dis(gen) > 128) {
+            result.val[i] = std::complex<int>(dis(gen), dis(gen));
+        }
         else
             result.val[i] = 0;
     }
@@ -96,9 +97,9 @@ Matrix matrixMult(const Matrix &first, const Matrix &second) {
     // Now!!! i, j - its out matrix
     for (int i = 0; i < first.rows; ++i)
         for (int j = 0; j < second.cols; ++j) {
-            int res = 0;
+            std::complex<int> res = 0;
             for (int k = 0; k < first.cols; ++k)
-                res += first.val[first.cols * i + k] *
+                res = res + first.val[first.cols * i + k] *
                        second.val[second.cols * k + j];
             out.val[out.cols * i + j] = res;
         }
@@ -130,7 +131,7 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
             first_it = first.ptrs[i - 1];
             second_it = second.ptrs[j - 1];
 
-            int res = 0;
+            std::complex<int> res = 0;
             while (first_it < first.ptrs[i] && second_it < second.ptrs[j]) {
                 if (first.cols_pos[first_it - 1] == second.cols_pos[second_it - 1]) {
                     res += first.val[first_it - 1] * second.val[second_it - 1];
