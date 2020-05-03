@@ -4,7 +4,7 @@
 #include <vector>
 #include "./matrix_multiplication.h"
 
-TEST(Gaussian_Image_Filtering_seq, Simple_Convert) {
+TEST(Gaussian_Image_Filtering_seq, Simple_convertToCRS) {
     const int rows = 3, cols = 4;
 
     std::vector<std::complex<int>> mat_val = {1, 0, 2, 0,
@@ -17,14 +17,14 @@ TEST(Gaussian_Image_Filtering_seq, Simple_Convert) {
     std::vector<int> c_cols = {0, 2, 1, 0, 2};
     std::vector<int> c_ptrs = {1, 3, 4, 6};
 
-    MatrixCRS cRSMat = convert(mat);
+    MatrixCRS cRSMat = convertToCRS(mat);
 
     EXPECT_EQ(cRSMat.val, c_vals);
     EXPECT_EQ(cRSMat.cols_pos, c_cols);
     EXPECT_EQ(cRSMat.ptrs, c_ptrs);
 }
 
-TEST(Gaussian_Image_Filtering_seq, Convert_first) {
+TEST(Gaussian_Image_Filtering_seq, convertToCRS_first) {
     const int rows = 4, cols = 4;
     Matrix mat(rows, cols);
 
@@ -38,7 +38,7 @@ TEST(Gaussian_Image_Filtering_seq, Convert_first) {
     std::vector<int> c_ptrs = {1, 2, 3, 4, 5};
 
     mat.val = mat_val;
-    MatrixCRS cRSMat = convert(mat);
+    MatrixCRS cRSMat = convertToCRS(mat);
 
     EXPECT_EQ(cRSMat.val, c_vals);
     EXPECT_EQ(cRSMat.cols_pos, c_cols);
@@ -54,7 +54,7 @@ TEST(Gaussian_Image_Filtering_seq, Random_Mat) {
     EXPECT_EQ(matrix.val.size(), static_cast<size_t>(rows * cols));
 }
 
-TEST(Gaussian_Image_Filtering_seq, Convert) {
+TEST(Gaussian_Image_Filtering_seq, convertToCRS) {
     const int rows = 3;
     const int cols = 4;
 
@@ -68,7 +68,7 @@ TEST(Gaussian_Image_Filtering_seq, Convert) {
             c_val.emplace_back(matrix.val[i]);
         }
 
-    MatrixCRS matrixCRS = convert(matrix);
+    MatrixCRS matrixCRS = convertToCRS(matrix);
 
     EXPECT_EQ(matrixCRS.val.size(), count);
     EXPECT_EQ(matrixCRS.val, c_val);
@@ -85,7 +85,7 @@ TEST(Gaussian_Image_Filtering_seq, Transponation) {
 
     mat.val = mat_val;
 
-    MatrixCRS matrixCRS_tr(transp(convert(mat)));
+    MatrixCRS matrixCRS_tr(transp(convertToCRS(mat)));
 
     // 1, 0, 0, 9
     // 0, 0, 0, 0
@@ -131,7 +131,7 @@ TEST(Gaussian_Image_Filtering_seq, C) {
                                   0, 0, 3};
     Matrix fir(3, 3);
     fir.val = first_val;
-    MatrixCRS first = convert(fir);
+    MatrixCRS first = convertToCRS(fir);
 //    first.rows = first.cols = 3;
 //    first.val = {1, 2, -1, 3, 3};
 //    first.cols_pos = {0, 2, 0, 1, 2};
@@ -142,14 +142,14 @@ TEST(Gaussian_Image_Filtering_seq, C) {
                                    0, 0, 1};
     Matrix sec(3, 3);
     sec.val = second_val;
-    MatrixCRS second = convert(sec);
+    MatrixCRS second = convertToCRS(sec);
 
     std::vector<std::complex<int>> res_val = {0, 2, 2,
                                12, -2, 0,
                                 0, 0, 3};
     Matrix re(3, 3);
     re.val = res_val;
-    MatrixCRS res = convert(re);
+    MatrixCRS res = convertToCRS(re);
 
 //    res.cols = res.rows = 3;
 //    res.val = {2, 2, 12, -2, 3};

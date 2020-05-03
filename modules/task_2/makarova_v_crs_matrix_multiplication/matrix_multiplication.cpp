@@ -25,10 +25,10 @@ Matrix generateRandomMat(int rows, int cols) {
 }
 
 MatrixCRS generateRandomCRSMat(int rows, int cols) {
-    return convert(generateRandomMat(rows, cols));
+    return convertToCRS(generateRandomMat(rows, cols));
 }
 
-MatrixCRS convert(const Matrix &inMat) {
+MatrixCRS convertToCRS(const Matrix &inMat) {
     MatrixCRS result;
     result.rows = inMat.rows;
     result.cols = inMat.cols;
@@ -54,6 +54,9 @@ MatrixCRS convert(const Matrix &inMat) {
 
     return result;
 }
+
+//Matrix convertToCRS(const MatrixCRS &inMat) {
+
 
 MatrixCRS transp(const MatrixCRS &inMat) {
     // generate out mat
@@ -99,7 +102,7 @@ Matrix matrixMult(const Matrix &first, const Matrix &second) {
     Matrix out(first.rows, second.cols);
 
     // Now!!! i, j - its out matrix
-    for (int i = 0; i < first.rows; ++i)
+    for (int i = 0; i < first.rows; ++i) {
         for (int j = 0; j < second.cols; ++j) {
             std::complex<int> res = 0;
             for (int k = 0; k < first.cols; ++k)
@@ -107,6 +110,7 @@ Matrix matrixMult(const Matrix &first, const Matrix &second) {
                        second.val[second.cols * k + j];
             out.val[out.cols * i + j] = res;
         }
+    }
 
     return out;
 }
@@ -130,6 +134,9 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
     int start = 1;
     out.ptrs.emplace_back(start);
     for (size_t i = 1; i < first.ptrs.size(); i++) {
+        std::vector<std::complex<int>> tmp_vals(second.ptrs.size(), std::complex<int>(0, 0));
+        std::vector<int> tmp_cols(out.cols);
+#pragma omp parallel for schedule(static, 4)
         for (size_t j = 1; j < second.ptrs.size(); j++) {
             // pognali ebat'
             first_it = first.ptrs[i - 1];
@@ -150,11 +157,23 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
             }
 
             if (res != 0) {
-                out.val.emplace_back(res);
-                out.cols_pos.emplace_back(j - 1);
+#pragma omp atomic
                 start++;
+
+                tmp_vals[j-1] = res;
+                tmp_cols[j-1] = j - 1; // ??
+                // out.val.emplace_back(res);
+                // out.cols_pos.emplace_back(j - 1);
+                // start++;
             }
-        }
+        } // END OF PARALLEL
+
+        for (size_t iter = 0; iter < second.ptrs.size(); ++iter)
+            if (tmp_vals[iter] != std::complex<int>(0, 0)) {
+                out.val.push_back(tmp_vals[iter]);
+                out.cols_pos.push_back(tmp_cols[iter]);
+            }
+
         out.ptrs.emplace_back(start);
     }
 

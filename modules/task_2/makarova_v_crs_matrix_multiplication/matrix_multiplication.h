@@ -25,7 +25,8 @@ struct MatrixCRS {
 MatrixCRS generateRandomCRSMat(int rows, int cols);
 Matrix generateRandomMat(int rows, int cols);
 
-MatrixCRS convert(const Matrix &inMat);
+MatrixCRS convertToCRS(const Matrix &inMat);
+Matrix convertToNorm(const MatrixCRS &inMat);
 MatrixCRS transp(const MatrixCRS &inMat);
 
 MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second);
