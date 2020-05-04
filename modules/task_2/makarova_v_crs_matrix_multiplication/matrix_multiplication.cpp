@@ -127,34 +127,40 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
     out.rows = first.rows;
     out.cols = second.cols;
 
+    print(first);
+    print(second);
     // int first_it;
     // int second_it;
-
+    int rowNZ = 0;
     out.ptrs.emplace_back(0);
-    for (size_t i = 1; i < first.ptrs.size(); i++) {
-        int rowNZ = 0;
-        for (size_t j = 1; j < second.ptrs.size(); j++) {
-            // pognali ebat'
-            // first_it = first.ptrs[i - 1];
-            // second_it = second.ptrs[j - 1];
-
-            std::complex<int> res = 0;
-            for (int k = first.ptrs[i - 1]; k < first.ptrs[i]; k++) {
-                for (int l = second.ptrs[j - 1]; l < second.ptrs[j]; l++) {
+    for (size_t i = 0; i < first.ptrs.size() - 1; i++) {
+        rowNZ = 0;
+        for (size_t j = 0; j < second.ptrs.size() - 1; j++) {
+            std::complex<int> sum(0, 0);
+            for (int k = first.ptrs[i]; k < first.ptrs[i + 1]; k++) {
+                for (int l = second.ptrs[j]; l < second.ptrs[j + 1]; l++) {
                     if (first.cols_pos[k] == second.cols_pos[l]) {
-                        res += first.val[k] * second.val[k];
+                        sum += first.val[k] * second.val[l];
+
+                        std::cout<<"col pos "<< first.cols_pos[k] << ' '<< second.cols_pos[l] <<std::endl;
+                        std::cout<<"K L "<< k << ' '<< l <<std::endl;
+
+                        std::cout<<sum.real() << ' '<< sum.imag()<<std::endl;
+
+
                         break;
                     }
                 }
             }
 
-            if (res != 0) {
-                out.val.push_back(res);
-                out.cols_pos.push_back(j - 1);
+
+            if (sum != std::complex<int>(0, 0)) {
+                out.val.push_back(sum);
+                out.cols_pos.push_back(j);
                 rowNZ++;
             }
         }
-        out.ptrs.push_back(rowNZ + out.ptrs[i - 1]);
+        out.ptrs.push_back(rowNZ + out.ptrs[i]);
     }
 
     return out;
