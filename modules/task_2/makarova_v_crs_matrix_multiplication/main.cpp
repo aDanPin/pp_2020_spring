@@ -15,7 +15,7 @@ TEST(Gaussian_Image_Filtering_seq, Simple_Convert) {
 
     std::vector<std::complex<int>> c_vals = {1, 2, 3, 4, 5};
     std::vector<int> c_cols = {0, 2, 1, 0, 2};
-    std::vector<int> c_ptrs = {1, 3, 4, 6};
+    std::vector<int> c_ptrs = {0, 2, 3, 5};
 
     MatrixCRS cRSMat = convert(mat);
 
@@ -35,7 +35,7 @@ TEST(Gaussian_Image_Filtering_seq, Convert_first) {
 
     std::vector<std::complex<int>> c_vals = {1, 3, 5, 4};
     std::vector<int> c_cols = {0, 1, 2, 3};
-    std::vector<int> c_ptrs = {1, 2, 3, 4, 5};
+    std::vector<int> c_ptrs = {0, 1, 2, 3, 4};
 
     mat.val = mat_val;
     MatrixCRS cRSMat = convert(mat);
@@ -94,7 +94,7 @@ TEST(Gaussian_Image_Filtering_seq, Transponation) {
 
     std::vector<std::complex<int>> c_vals = {1, 9, 4, 1};
     std::vector<int> c_cols = {0, 3, 1, 3};
-    std::vector<int> c_ptrs = {1, 3, 3, 3, 5};
+    std::vector<int> c_ptrs = {0, 2, 2, 2, 4};
 
     EXPECT_EQ(matrixCRS_tr.val, c_vals);
     EXPECT_EQ(matrixCRS_tr.cols_pos, c_cols);

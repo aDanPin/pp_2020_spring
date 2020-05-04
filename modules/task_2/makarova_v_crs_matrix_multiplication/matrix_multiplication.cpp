@@ -35,7 +35,7 @@ MatrixCRS convert(const Matrix &inMat) {
 
     int count;
 
-    count = 1;
+    count = 0;
     result.ptrs.emplace_back(count);
     for (int i = 0; i < inMat.rows; ++i) {
         count = 0;
@@ -60,10 +60,11 @@ MatrixCRS transp(const MatrixCRS &inMat) {
     Matrix just_mat(inMat.rows, inMat.cols);
 
 #pragma omp parallel for
-    for (size_t i = 1; i < inMat.ptrs.size(); ++i) {
+    for (size_t i = 0; i < inMat.ptrs.size() - 1; ++i) {
         // i its rows
-        for (int j = inMat.ptrs[i - 1]; j < inMat.ptrs[i]; ++j) {
-            just_mat.val[just_mat.cols * (i - 1) + inMat.cols_pos[j - 1]] = inMat.val[j - 1];
+        for (int j = inMat.ptrs[i]; j < inMat.ptrs[i + 1]; ++j) {
+//            std::cout<< "I : " << i<< " J : "<< j<< " index: "<< just_mat.cols * (i) + inMat.cols_pos[j] <<std::endl;
+            just_mat.val[just_mat.cols * (i) + inMat.cols_pos[j]] = inMat.val[j];
         }
     }
 
@@ -73,8 +74,8 @@ MatrixCRS transp(const MatrixCRS &inMat) {
     result.rows = inMat.rows;
     int count;
 
-    count = 1;
-    result.ptrs.emplace_back(1);
+    count = 0;
+    result.ptrs.emplace_back(0);
     for (int j = 0; j < just_mat.rows; ++j) {
         count = 0;
         for (int i = 0; i < just_mat.cols; ++i) {
@@ -88,6 +89,8 @@ MatrixCRS transp(const MatrixCRS &inMat) {
         count += result.ptrs.back();
         result.ptrs.emplace_back(count);
     }
+
+    std::cout<< 3 <<std::endl;
 
     return result;
 }
@@ -127,9 +130,9 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
     // int first_it;
     // int second_it;
 
-    int start = 1;
-    out.ptrs.emplace_back(start);
+    out.ptrs.emplace_back(0);
     for (size_t i = 1; i < first.ptrs.size(); i++) {
+        int rowNZ = 0;
         for (size_t j = 1; j < second.ptrs.size(); j++) {
             // pognali ebat'
             // first_it = first.ptrs[i - 1];
@@ -146,12 +149,12 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
             }
 
             if (res != 0) {
-                out.val.emplace_back(res);
-                out.cols_pos.emplace_back(j - 1);
-                start++;
+                out.val.push_back(res);
+                out.cols_pos.push_back(j - 1);
+                rowNZ++;
             }
         }
-        out.ptrs.emplace_back(start);
+        out.ptrs.push_back(rowNZ + out.ptrs[i - 1]);
     }
 
     return out;
