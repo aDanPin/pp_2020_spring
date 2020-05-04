@@ -29,6 +29,7 @@ MatrixCRS convert(const Matrix &inMat);
 MatrixCRS transp(const MatrixCRS &inMat);
 
 MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second);
+MatrixCRS matrixCRSMultOMP(const MatrixCRS &first, const MatrixCRS &second);
 Matrix matrixMult(const Matrix &first, const Matrix &second);
 
 void print(const MatrixCRS &in);

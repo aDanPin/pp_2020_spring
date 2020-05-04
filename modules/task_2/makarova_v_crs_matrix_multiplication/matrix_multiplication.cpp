@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <vector>
 #include <iostream>
+#include <cstring>
 
 #include <omp.h>
 
@@ -63,7 +64,6 @@ MatrixCRS transp(const MatrixCRS &inMat) {
     for (size_t i = 0; i < inMat.ptrs.size() - 1; ++i) {
         // i its rows
         for (int j = inMat.ptrs[i]; j < inMat.ptrs[i + 1]; ++j) {
-//            std::cout<< "I : " << i<< " J : "<< j<< " index: "<< just_mat.cols * (i) + inMat.cols_pos[j] <<std::endl;
             just_mat.val[just_mat.cols * (i) + inMat.cols_pos[j]] = inMat.val[j];
         }
     }
@@ -89,8 +89,6 @@ MatrixCRS transp(const MatrixCRS &inMat) {
         count += result.ptrs.back();
         result.ptrs.emplace_back(count);
     }
-
-    std::cout<< 3 <<std::endl;
 
     return result;
 }
@@ -127,10 +125,6 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
     out.rows = first.rows;
     out.cols = second.cols;
 
-    print(first);
-    print(second);
-    // int first_it;
-    // int second_it;
     int rowNZ = 0;
     out.ptrs.emplace_back(0);
     for (size_t i = 0; i < first.ptrs.size() - 1; i++) {
@@ -141,13 +135,6 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
                 for (int l = second.ptrs[j]; l < second.ptrs[j + 1]; l++) {
                     if (first.cols_pos[k] == second.cols_pos[l]) {
                         sum += first.val[k] * second.val[l];
-
-                        std::cout<<"col pos "<< first.cols_pos[k] << ' '<< second.cols_pos[l] <<std::endl;
-                        std::cout<<"K L "<< k << ' '<< l <<std::endl;
-
-                        std::cout<<sum.real() << ' '<< sum.imag()<<std::endl;
-
-
                         break;
                     }
                 }
@@ -163,6 +150,93 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
         out.ptrs.push_back(rowNZ + out.ptrs[i]);
     }
 
+    return out;
+}
+
+
+MatrixCRS matrixCRSMultOMP(const MatrixCRS &first, const MatrixCRS &second_a) {
+    omp_set_num_threads(4);
+
+    if (first.cols != second_a.rows)
+        throw std::runtime_error("Matrix dimensions do not match");
+
+    MatrixCRS second = transp(second_a);
+
+    if (first.ptrs.size() != second.ptrs.size())
+            throw std::runtime_error("AAAAAA");
+
+    MatrixCRS out;
+    out.rows = first.rows;
+    out.cols = second.cols;
+
+    std::vector<int> tmpResultPtrs(first.ptrs.size(), 0);
+    std::vector<int>* tmpResultColsPose = new std::vector<int>[first.ptrs.size() - 1];
+    std::vector<std::complex<int>>* tmpResultValue = new std::vector<std::complex<int>>[first.ptrs.size() - 1];
+
+#pragma omp parallel for
+    for (size_t i = 0; i < first.ptrs.size() - 1; ++i) { // START
+        std::vector<std::complex<int>> tmpVals(first.ptrs.size() - 1, std::complex<int>(0, 0));
+
+        int rowNZ = 0;
+        for (size_t j = 0; j < second.ptrs.size() - 1; j++) {
+            std::complex<int> sum(0, 0);
+            for (int k = first.ptrs[i]; k < first.ptrs[i + 1]; k++) {
+                for (int l = second.ptrs[j]; l < second.ptrs[j + 1]; l++) {
+                    if (first.cols_pos[k] == second.cols_pos[l]) {
+                        sum += first.val[k] * second.val[l];
+                        break;
+                    }
+                }
+            }
+
+            if (sum != std::complex<int>(0, 0)) {
+                tmpResultValue[i].push_back(sum);
+                tmpResultColsPose[i].push_back(j);
+                rowNZ++;
+            }
+        }
+        tmpResultPtrs[i/* !!! */] = rowNZ;        
+    } // END
+    // Здесь у нас есть готовые массивы ptrs col_pos vals, осталось только аккуратно их проинициализировать
+
+    // Инициализируем ptrs
+    int tmpRows;
+    out.ptrs.resize(first.ptrs.size());
+    for (size_t i = 0; i < out.ptrs.size() - 1; ++i) {
+        int tmp = tmpResultPtrs[i];
+        out.ptrs[i] = tmpRows;
+        tmpRows += tmp;
+    }
+    out.ptrs[first.ptrs.size()] = tmpRows;
+
+
+    int count;
+    // Выделяем место в резуьтирующей матрице, чтобы скопировать
+    std::cout<< 0 << std::endl;
+    
+    out.cols_pos.resize(tmpRows);
+    std::cout<< 01 << std::endl;
+    
+    out.val.resize(tmpRows);
+    std::cout<< 02 << std::endl;
+    
+    for (size_t i = 0; i < out.ptrs.size() - 1; ++i) {
+        std::cout<< 1 << std::endl;
+        int size = tmpResultColsPose[i].size();
+        std::cout<< 2 << std::endl;
+        
+        std::memcpy(&out.cols_pos[count], &tmpResultColsPose[i][0], size * sizeof(int));
+        std::cout<< 3 << std::endl;
+        
+        std::memcpy(&out.val[count], &tmpResultValue[i][0], size * sizeof(std::complex<int>));
+        std::cout<< 4 << std::endl;
+        
+        count += size;
+    }
+
+    delete[]tmpResultColsPose;
+    delete[]tmpResultValue;
+  
     return out;
 }
 

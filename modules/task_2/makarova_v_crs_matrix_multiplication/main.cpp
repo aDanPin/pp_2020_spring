@@ -138,8 +138,8 @@ TEST(Gaussian_Image_Filtering_seq, C) {
 //    first.ptrs = {1, 3, 5, 6};
 
     std::vector<std::complex<int>> second_val = {0, 2, 0,
-                                   4, 0, 0,
-                                   0, 0, 1};
+                                                 4, 0, 0,
+                                                 0, 0, 1};
     Matrix sec(3, 3);
     sec.val = second_val;
     MatrixCRS second = convert(sec);
@@ -153,6 +153,40 @@ TEST(Gaussian_Image_Filtering_seq, C) {
 //    res.ptrs = {1, 3, 5, 6};
 
     MatrixCRS multRes = matrixCRSMult(first, second);
+
+    EXPECT_EQ(res.val, multRes.val);
+    EXPECT_EQ(res.cols_pos, multRes.cols_pos);
+    EXPECT_EQ(res.ptrs, multRes.ptrs);
+}
+
+TEST(Gaussian_Image_Filtering_seq, D) {
+    std::vector<std::complex<int>> first_val = {1, 0, 2,
+                                 -1, 3, 0,
+                                  0, 0, 3};
+    Matrix fir(3, 3);
+    fir.val = first_val;
+    MatrixCRS first = convert(fir);
+//    first.rows = first.cols = 3;
+//    first.val = {1, 2, -1, 3, 3};
+//    first.cols_pos = {0, 2, 0, 1, 2};
+//    first.ptrs = {1, 3, 5, 6};
+
+    std::vector<std::complex<int>> second_val = {0, 2, 0,
+                                                 4, 0, 0,
+                                                 0, 0, 1};
+    Matrix sec(3, 3);
+    sec.val = second_val;
+    MatrixCRS second = convert(sec);
+
+    Matrix re = matrixMult(fir, sec);
+    MatrixCRS res = convert(re);
+
+//    res.cols = res.rows = 3;
+//    res.val = {2, 2, 12, -2, 3};
+//    res.cols_pos = {1, 2, 0, 1, 2};
+//    res.ptrs = {1, 3, 5, 6};
+
+    MatrixCRS multRes = matrixCRSMultOMP(first, second);
 
     EXPECT_EQ(res.val, multRes.val);
     EXPECT_EQ(res.cols_pos, multRes.cols_pos);
