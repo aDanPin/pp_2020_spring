@@ -144,11 +144,7 @@ TEST(Gaussian_Image_Filtering_seq, C) {
     sec.val = second_val;
     MatrixCRS second = convert(sec);
 
-    std::vector<std::complex<int>> res_val = {0, 2, 2,
-                               12, -2, 0,
-                                0, 0, 3};
-    Matrix re(3, 3);
-    re.val = res_val;
+    Matrix re = matrixMult(fir, sec);
     MatrixCRS res = convert(re);
 
 //    res.cols = res.rows = 3;

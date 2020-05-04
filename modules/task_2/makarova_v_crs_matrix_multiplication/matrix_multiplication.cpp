@@ -124,28 +124,24 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
     out.rows = first.rows;
     out.cols = second.cols;
 
-    int first_it;
-    int second_it;
+    // int first_it;
+    // int second_it;
 
     int start = 1;
     out.ptrs.emplace_back(start);
     for (size_t i = 1; i < first.ptrs.size(); i++) {
         for (size_t j = 1; j < second.ptrs.size(); j++) {
             // pognali ebat'
-            first_it = first.ptrs[i - 1];
-            second_it = second.ptrs[j - 1];
+            // first_it = first.ptrs[i - 1];
+            // second_it = second.ptrs[j - 1];
 
             std::complex<int> res = 0;
-            while (first_it < first.ptrs[i] && second_it < second.ptrs[j]) {
-                if (first.cols_pos[first_it - 1] == second.cols_pos[second_it - 1]) {
-                    res += first.val[first_it - 1] * second.val[second_it - 1];
-                    first_it++;
-                    second_it++;
-                } else {
-                    if (first.cols_pos[first_it - 1] < second.cols_pos[second_it - 1])
-                        first_it++;
-                    else
-                        second_it++;
+            for (int k = first.ptrs[i - 1]; k < first.ptrs[i]; k++) {
+                for (int l = second.ptrs[j - 1]; l < second.ptrs[j]; l++) {
+                    if (first.cols_pos[k] == second.cols_pos[l]) {
+                        res += first.val[k] * second.val[k];
+                        break;
+                    }
                 }
             }
 
