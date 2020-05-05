@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <vector>
+#include <ctime>
 #include "./matrix_multiplication.h"
 
 TEST(Gaussian_Image_Filtering_seq, Simple_Convert) {
@@ -161,15 +162,11 @@ TEST(Gaussian_Image_Filtering_seq, C) {
 
 TEST(Gaussian_Image_Filtering_seq, D) {
     std::vector<std::complex<int>> first_val = {1, 0, 2,
-                                 -1, 3, 0,
-                                  0, 0, 3};
+                                               -1, 3, 0,
+                                                0, 0, 3};
     Matrix fir(3, 3);
     fir.val = first_val;
     MatrixCRS first = convert(fir);
-//    first.rows = first.cols = 3;
-//    first.val = {1, 2, -1, 3, 3};
-//    first.cols_pos = {0, 2, 0, 1, 2};
-//    first.ptrs = {1, 3, 5, 6};
 
     std::vector<std::complex<int>> second_val = {0, 2, 0,
                                                  4, 0, 0,
@@ -181,16 +178,51 @@ TEST(Gaussian_Image_Filtering_seq, D) {
     Matrix re = matrixMult(fir, sec);
     MatrixCRS res = convert(re);
 
-//    res.cols = res.rows = 3;
-//    res.val = {2, 2, 12, -2, 3};
-//    res.cols_pos = {1, 2, 0, 1, 2};
-//    res.ptrs = {1, 3, 5, 6};
 
     MatrixCRS multRes = matrixCRSMultOMP(first, second);
 
     EXPECT_EQ(res.val, multRes.val);
     EXPECT_EQ(res.cols_pos, multRes.cols_pos);
     EXPECT_EQ(res.ptrs, multRes.ptrs);
+}
+
+TEST(Gaussian_Image_Filtering_seq, PerfRandMatrixTest) {
+    int row, col;
+    row = col = 350;
+
+    std::cout<< "Start generating " << std::endl;
+    Matrix  firstNorm  = generateRandomMat(row, col);
+    Matrix  secondNorm = generateRandomMat(row, col);
+    std::cout<< "End generating " << std::endl;
+
+    std::cout<< "Start converting" << std::endl;
+    MatrixCRS firstCRS  = convert(firstNorm);
+    MatrixCRS secondCRS = convert(secondNorm);
+    std::cout<< "End converting" << std::endl;
+
+    std::cout<< "Start sec" << std::endl;
+    clock_t secStart, secFinish;
+    secStart = clock();
+    MatrixCRS multRes = matrixCRSMult(firstCRS, secondCRS);
+    secFinish = clock();
+    double secTime = (double)(secFinish - secStart) / CLOCKS_PER_SEC; 
+    std::cout<< "End sec" << std::endl;
+
+    std::cout<< "Start paral" << std::endl;
+    clock_t parStart, parFinish;
+    parStart = clock();
+    MatrixCRS multResOMP = matrixCRSMultOMP(firstCRS, secondCRS);
+    parFinish = clock();
+    double parTime = (double)(parFinish - parStart) / CLOCKS_PER_SEC; 
+    std::cout<< "End paral" << std::endl;
+
+    std::cout<< "secTime / parTime: " << secTime / parTime << std::endl;
+    std::cout<< "secTime: " << secTime << std::endl;
+    std::cout<< "parTime: " << parTime << std::endl;
+
+    EXPECT_EQ(multRes.ptrs, multResOMP.ptrs);
+    EXPECT_EQ(multRes.val, multResOMP.val);
+    EXPECT_EQ(multRes.cols_pos, multResOMP.cols_pos);
 }
 
 int main(int argc, char** argv) {

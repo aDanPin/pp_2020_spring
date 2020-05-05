@@ -27,6 +27,7 @@ Matrix generateRandomMat(int rows, int cols);
 
 MatrixCRS convert(const Matrix &inMat);
 MatrixCRS transp(const MatrixCRS &inMat);
+MatrixCRS transpOMP(const MatrixCRS &inMat);
 
 MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second);
 MatrixCRS matrixCRSMultOMP(const MatrixCRS &first, const MatrixCRS &second);
