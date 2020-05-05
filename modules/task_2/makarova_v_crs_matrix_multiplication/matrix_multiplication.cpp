@@ -16,7 +16,7 @@ Matrix generateRandomMat(int rows, int cols) {
     std::uniform_int_distribution<int> dis(-255, 255);
     Matrix result(rows, cols);
     for (int i = 0; i < rows * cols; ++i) {
-        if (dis(gen) > 128) {
+        if (dis(gen) > 200) {
             result.val[i] = std::complex<int>(dis(gen), dis(gen));
         }
         else
@@ -205,18 +205,41 @@ MatrixCRS matrixCRSMultOMP(const MatrixCRS &first, const MatrixCRS &second_a) {
     out.rows = first.rows;
     out.cols = second.cols;
 
+// MPI -технология распараллеливания уровня процессов 
+// OMP и TBB - уровня потоков
+// В нашей ситуации основное различия процессов и потоков заключается в том,
+// что процессы имеют собственное адресное пространство, а потоки - общее
+// Из-за этого в MPI мы посылали данные к процессам, а потом собирали результаты
+// Сейчас же потоки будут работать над одной памятью и будут конкурировать за нее
+// Наша задача - организовать рабоу потоков так, чтобы они меньше всего менаши друг другу
+
+// Впрочем, подход распарралеливания MPI и OMP достаточно похожи
+// Код парралельной области в OMP будт выполняться параллельно всеми потоками
+
+// Идея алгоритма заключается в том, чтобы создать несколько массивово vals и col_pos для аждого потока,
+// заполнить их и потом собрать обратно.
+
+    // Временный масссив ptrs
     std::vector<int> tmpResultPtrs(first.ptrs.size(), 0);
+    // Временный масссив массивово col_pos
     std::vector<int>* tmpResultColsPose = new std::vector<int>[first.ptrs.size() - 1];
+    // Временный масссив ассивов vals
     std::vector<std::complex<int>>* tmpResultValue = new std::vector<std::complex<int>>[first.ptrs.size() - 1];
 
     omp_set_num_threads(4);
     int k;
     size_t j;
-#pragma omp for private(j, k) schedule(static, 16) 
+
+// Начало параллельной области
+// Даем кажому потоку обрабатывать отдельную строку матрицы first
+// "schedule(static, 32)" означает, что каждый поток будео обрабатывать пепрерывный участок размером 32 строки
+#pragma omp for private(j, k) schedule(static, 32)
     for (size_t i = 0; i < first.ptrs.size() - 1; ++i) { // START PRALLEL
+        // Здесь все очень похоже на последовательную реализацию
         std::vector<std::complex<int>> tmpVals(first.ptrs.size() - 1, std::complex<int>(0, 0));
 
         int rowNZ = 0;
+        // Скалярное умножение векторов (замена цикла while() в последовательной версии)
         for (j = 0; j < second.ptrs.size() - 1; j++) {
             std::complex<int> sum(0, 0);
             for (k = first.ptrs[i]; k < first.ptrs[i + 1]; k++) {
@@ -229,6 +252,8 @@ MatrixCRS matrixCRSMultOMP(const MatrixCRS &first, const MatrixCRS &second_a) {
             }
 
             if (sum != std::complex<int>(0, 0)) {
+                // Здесь i означает некоторую область юрисдикции каждого потока
+                // i каждый поток в один момент времени "захватывает" только один конкретный i
                 tmpResultValue[i].push_back(sum);
                 tmpResultColsPose[i].push_back(j);
                 rowNZ++;
@@ -253,6 +278,7 @@ MatrixCRS matrixCRSMultOMP(const MatrixCRS &first, const MatrixCRS &second_a) {
     out.cols_pos.resize(tmpRows);
     out.val.resize(tmpRows);
     int count = 0;
+    // инициализируем col_pos и vals
     for (size_t i = 0; i < out.ptrs.size() - 1; ++i) {
         int size = tmpResultColsPose[i].size();
         std::memcpy(&out.cols_pos[count], &tmpResultColsPose[i][0], size * sizeof(int));        
@@ -260,9 +286,10 @@ MatrixCRS matrixCRSMultOMP(const MatrixCRS &first, const MatrixCRS &second_a) {
         count += size;
     }
 
+    // Возможно, это можно закомментировать, можшь проверить ))))))))
     delete[]tmpResultColsPose;
     delete[]tmpResultValue;
-  
+
     return out;
 }
 
