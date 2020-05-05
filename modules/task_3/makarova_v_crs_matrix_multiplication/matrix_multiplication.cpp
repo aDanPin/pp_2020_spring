@@ -161,6 +161,7 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
     MatrixCRS out;
     out.rows = first.rows;
     out.cols = second.cols;
+    clock_t Start = clock();
 
     int rowNZ = 0;
     out.ptrs.emplace_back(0);
@@ -186,9 +187,59 @@ MatrixCRS matrixCRSMult(const MatrixCRS &first, const MatrixCRS &second_a) {
         }
         out.ptrs.push_back(rowNZ + out.ptrs[i]);
     }
+    
+    clock_t End = clock();
+    double secTime = (double)(End - Start) / CLOCKS_PER_SEC; 
+    std::cout<< "Mult time SEQ: " << secTime << std::endl;
 
     return out;
 }
+
+class ParallelProcessing {
+ public:
+    const MatrixCRS& first;
+    const MatrixCRS& second;
+    std::vector<int>* tmpResultPtrs;
+    std::vector<int>* tmpResultColsPose;
+    std::vector<std::complex<int>>* tmpResultValue;
+
+    void operator()(const tbb::blocked_range<int> &r) const {
+        for (int i = r.begin(); i < r.end(); ++i) { // START PRALLEL
+            std::vector<std::complex<int>> tmpVals(first.ptrs.size() - 1, 0);
+
+            int rowNZ = 0;
+            for (size_t j = 0; j < second.ptrs.size() - 1; j++) {
+                std::complex<int> sum(0, 0);
+                for (int k = first.ptrs[i]; k < first.ptrs[i + 1]; k++) {
+                    for (int l = second.ptrs[j]; l < second.ptrs[j + 1]; l++) {
+                        if (first.cols_pos[k] == second.cols_pos[l]) {
+                            sum += first.val[k] * second.val[l];
+                            break;
+                        }
+                    }
+                }
+
+                if (sum != std::complex<int>(0, 0)) {
+                    tmpResultValue[i].push_back(sum);
+                    tmpResultColsPose[i].push_back(j);
+                    rowNZ++;
+                }
+            }
+            tmpResultPtrs[0][i] = rowNZ;        
+        } // END PRALLEL
+    }
+
+    ParallelProcessing( const MatrixCRS& first,
+                        const MatrixCRS& second,
+                        std::vector<int>* tmpResultPtrs,
+                        std::vector<int>* tmpResultColsPose,
+                        std::vector<std::complex<int>>* tmpResultValue) :
+    first (first),
+    second (second),
+    tmpResultPtrs (tmpResultPtrs),
+    tmpResultColsPose (tmpResultColsPose),
+    tmpResultValue (tmpResultValue) {}
+};
 
 MatrixCRS matrixCRSMultTBB(const MatrixCRS &first, const MatrixCRS &second_a) {
 
@@ -204,32 +255,17 @@ MatrixCRS matrixCRSMultTBB(const MatrixCRS &first, const MatrixCRS &second_a) {
     out.rows = first.rows;
     out.cols = second.cols;
 
+    clock_t Start = clock();
+
     std::vector<int> tmpResultPtrs(first.ptrs.size(), 0);
     std::vector<int>* tmpResultColsPose = new std::vector<int>[first.ptrs.size() - 1];
     std::vector<std::complex<int>>* tmpResultValue = new std::vector<std::complex<int>>[first.ptrs.size() - 1];
-    for (size_t i = 0; i < first.ptrs.size() - 1; ++i) { // START PRALLEL
-        std::vector<std::complex<int>> tmpVals(first.ptrs.size() - 1, std::complex<int>(0, 0));
-
-        int rowNZ = 0;
-        for (size_t j = 0; j < second.ptrs.size() - 1; j++) {
-            std::complex<int> sum(0, 0);
-            for (int k = first.ptrs[i]; k < first.ptrs[i + 1]; k++) {
-                for (int l = second.ptrs[j]; l < second.ptrs[j + 1]; l++) {
-                    if (first.cols_pos[k] == second.cols_pos[l]) {
-                        sum += first.val[k] * second.val[l];
-                        break;
-                    }
-                }
-            }
-
-            if (sum != std::complex<int>(0, 0)) {
-                tmpResultValue[i].push_back(sum);
-                tmpResultColsPose[i].push_back(j);
-                rowNZ++;
-            }
-        }
-        tmpResultPtrs[i] = rowNZ;        
-    } // END PRALLEL
+    
+    ParallelProcessing pp(first, second,
+                          &tmpResultPtrs,
+                          tmpResultColsPose,
+                          tmpResultValue);
+    tbb::parallel_for(tbb::blocked_range<int>(0, first.ptrs.size() - 1, out.rows / 4), pp);
 
     int tmpRows = 0;
     out.ptrs.resize(first.ptrs.size());
@@ -250,6 +286,9 @@ MatrixCRS matrixCRSMultTBB(const MatrixCRS &first, const MatrixCRS &second_a) {
         std::memcpy(&out.val[count], &tmpResultValue[i][0], size * sizeof(std::complex<int>));
         count += size;
     }
+    clock_t End = clock();
+    double secTime = (double)(End - Start) / CLOCKS_PER_SEC; 
+    std::cout<< "Mult time TBB: " << secTime << std::endl;
 
     delete[]tmpResultColsPose;
     delete[]tmpResultValue;
