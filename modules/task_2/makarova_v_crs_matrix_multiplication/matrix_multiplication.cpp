@@ -200,31 +200,35 @@ MatrixCRS matrixCRSMultOMP(const MatrixCRS &first, const MatrixCRS &second_a) {
     // Здесь у нас есть готовые массивы ptrs col_pos vals, осталось только аккуратно их проинициализировать
 
     // Инициализируем ptrs
-    int tmpRows;
+    int tmpRows = 0;
+    std::cout<< "tmpRows: " << tmpRows << std::endl;
+
     out.ptrs.resize(first.ptrs.size());
     for (size_t i = 0; i < out.ptrs.size() - 1; ++i) {
         int tmp = tmpResultPtrs[i];
         out.ptrs[i] = tmpRows;
         tmpRows += tmp;
+    std::cout<< "tmpRows: " << tmpRows << std::endl;
+    std::cout<< "tmpTmp: " << tmp << std::endl;
+
     }
     out.ptrs[first.ptrs.size()] = tmpRows;
 
 
-    int count;
+
     // Выделяем место в резуьтирующей матрице, чтобы скопировать
-    std::cout<< 0 << std::endl;
-    
+    std::cout<< "tmpRows: " << tmpRows << std::endl;
     out.cols_pos.resize(tmpRows);
-    std::cout<< 01 << std::endl;
-    
     out.val.resize(tmpRows);
-    std::cout<< 02 << std::endl;
-    
+    int count = 0;
     for (size_t i = 0; i < out.ptrs.size() - 1; ++i) {
         std::cout<< 1 << std::endl;
         int size = tmpResultColsPose[i].size();
         std::cout<< 2 << std::endl;
         
+        std::cout<< "out.cols_pos.size(): "<< out.cols_pos.size() << std::endl;
+        std::cout<< "size: "<< size << std::endl;
+        std::cout<< "count: "<< count << std::endl;
         std::memcpy(&out.cols_pos[count], &tmpResultColsPose[i][0], size * sizeof(int));
         std::cout<< 3 << std::endl;
         
