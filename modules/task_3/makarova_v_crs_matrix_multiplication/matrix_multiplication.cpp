@@ -269,13 +269,13 @@ MatrixCRS matrixCRSMultTBB(const MatrixCRS &first, const MatrixCRS &second_a) {
 
     int tmpRows = 0;
     out.ptrs.resize(first.ptrs.size());
-    for (size_t i = 0; i < out.ptrs.size(); ++i) {
+    for (size_t i = 0; i < out.ptrs.size() - 1; ++i) {
         int tmp = tmpResultPtrs[i];
         out.ptrs[i] = tmpRows;
         tmpRows += tmp;
 
     }
-    out.ptrs[first.ptrs.size()] = tmpRows;
+    out.ptrs[first.ptrs.size() - 1] = tmpRows;
 
     out.cols_pos.resize(tmpRows);
     out.val.resize(tmpRows);
