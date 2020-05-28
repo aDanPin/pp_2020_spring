@@ -32,10 +32,6 @@ TEST(Contur_ceq, Can_Take_Contur_Rand) {
 
     Image res = getContur(img);
 
-    print("img", img);
-
-    print("res", res);
-
     ASSERT_NE(res.data, img.data);
 }
 
